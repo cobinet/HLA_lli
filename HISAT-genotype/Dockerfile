@@ -1,5 +1,7 @@
 FROM alpine/git AS clone
 RUN git clone https://github.com/ANHIG/IMGTHLA.git /IMGTHLA
+WORKDIR /IMGTHLA
+RUN git checkout 3500
 
 
 FROM intelliseqngs/hisat-genotype:test
