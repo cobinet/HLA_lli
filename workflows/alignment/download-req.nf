@@ -24,6 +24,7 @@ process remove_alternatives {
 }
 
 process index_fasta {
+    publishDir "reference_genome"
     input:
         file(fasta)
     output:
@@ -35,8 +36,17 @@ process index_fasta {
 }
 
 workflow DOWNLOAD_REF {
-    emit:
-        index_fasta.out
     main:
-        remove_alternatives(download_reference()) | index_fasta
+        ref = download_reference()
+        noalt = remove_alternatives(ref)
+
+        index_fasta(ref.merge(noalt).flatten())
+
+    emit:
+        ref = index_fasta.out[0]
+        refWoAlt = index_fasta.out[1]
+}
+
+workflow {
+    DOWNLOAD_REF()
 }
