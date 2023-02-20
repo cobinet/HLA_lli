@@ -34,7 +34,9 @@ process index_fasta {
         """
 }
 
-workflow {
-
-    remove_alternatives(download_reference()) | index_fasta
+workflow DOWNLOAD_REF {
+    emit:
+        index_fasta.out
+    main:
+        remove_alternatives(download_reference()) | index_fasta
 }
