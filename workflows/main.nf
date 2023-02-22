@@ -10,3 +10,7 @@ workflow HLATYPING {
         fa_files = Channel.of.fromFilePairs('1-Input/*R{1,2}*.fastq')
         BWA_MEM(fa_files , DOWNLOAD_REF.out)
 }
+
+workflow {
+    HLATYPING()
+}
