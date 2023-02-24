@@ -1,5 +1,5 @@
 process download_reference {
-    container 'docker://alpine'
+    container 'frolvlad/alpine-bash'
     output:
         path "hg38.fa", emit: "reference"
     script:
@@ -10,7 +10,7 @@ process download_reference {
 }
 
 process remove_alternatives {
-    container 'docker://alpine'
+    container 'biocontainers/samtools:v1.9-4-deb_cv1'
     input:
         file reference
     script:
@@ -24,6 +24,7 @@ process remove_alternatives {
 }
 
 process index_fasta {
+    container 'biocontainers/bwa:v0.7.17_cv1'
     publishDir "reference_genome"
     input:
         file(fasta)
@@ -40,7 +41,7 @@ workflow DOWNLOAD_REF {
         ref = download_reference()
         noalt = remove_alternatives(ref)
 
-        index_fasta(ref.merge(noalt).flatten())
+        index_fasta(ref.concat(noalt))
 
     emit:
         ref = index_fasta.out[0]
