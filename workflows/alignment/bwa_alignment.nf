@@ -5,7 +5,7 @@ process BWA_MEM {
     publishDir "2-Alignment", mode: 'link'
     input:
         tuple val(sample), path(reads)
-        path bwa_index
+        each path(bwa_index)
     output:
         tuple val(sample), path("${sample}.bam*")
     script:
