@@ -1,7 +1,6 @@
 include { DOWNLOAD_REF } from './alignment/download-req.nf'
 include { BWA_MEM } from './alignment/bwa_alignment.nf'
-
-index_pattern = ".{,amb,ann,bwt,pac,sa}"
+include { HLA_LA } from './HLA-LA/main.nf'
 
 workflow MAPPING {
     main:
@@ -22,23 +21,18 @@ workflow MAPPING {
 }
 
 workflow HLATYPING_REF {
-    take:
-        path ref
+    take: ref
     main:
-
-    emit:
-
+        HLA_LA(ref).view()
 }
 
 workflow HLATYPING_REF_WO_ALT {
-    take:
-        path ref
+    take: ref
     main:
-
-    emit:
-
+        ref.view()
 }
 
 workflow {
-    MAPPING().ref.view()
+    MAPPING()
+    HLATYPING_REF(MAPPING.out.ref)
 }

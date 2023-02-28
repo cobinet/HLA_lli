@@ -1,55 +1,59 @@
+include { BWA_MEM } from '../alignment/bwa_alignment.nf'
 
-
-process BWAmem {
-    cpus 8
+process GET_GRAPH {
+    cpus 20
     memory '20G'
-    container 'docker://humanlongevity/hla'
-    publishDir "2-Alignment", mode: 'link'
-    input:
-        tuple val(sample), path(reads)
-        path bwa_index
+    container 'docker://zlskidmore/hla-la:latest'
+    publishDir "graph"
     output:
-        tuple val(sample), path("${sample}.bam*")
+        path "PRG_MHC_GRCh38_withIMGT/", emit: graph
     script:
-        def idxbase = bwa_index[0].baseName
-        def (f1, f2) = reads
         """
-        bwa mem -t ${task.cpus} ${idxbase} ${f1} ${f2} |\
-        samtools sort -@${task.cpus} -o ${sample}.bam -
-        samtools index ${sample}.bam
+        wget http://www.well.ox.ac.uk/downloads/PRG_MHC_GRCh38_withIMGT.tar.gz
+        tar -xvzf PRG_MHC_GRCh38_withIMGT.tar.gz
+        HLA-LA --action prepareGraph --PRG_graph_dir PRG_MHC_GRCh38_withIMGT
         """
 }
 
-process hla_la {
+process TYPING {
     cpus 20
     memory '200G'
     container 'docker://zlskidmore/hla-la:latest'
     publishDir "3-HLA-LA", mode: 'link'
     input:
         tuple val(sample), file(bam)
+        path graph
     output:
         path "./out/*"
     script:
         """
+        mkdir out
         HLA-LA.pl\
             --BAM ${bam}\
-            --graph PRG_MHC_GRCh38_withIMGT\
+            --graph ${graph}\
             --sampleID ${sample}\
             --maxThreads ${task.cpus}\
             --workingDir ./out/
         """
+}
 
+workflow HLA_LA {
+    take: bam
+    main:
+        TYPING(bam, GET_GRAPH())
+    emit:
+        TYPING.out
 }
 
 workflow {
-    if (!params.reference) {
-        exit 1, "Reference genome not specified! Please, provide --reference"
+    if (!params.ref) {
+        exit 1, "Reference genome not specified! Please, provide --ref"
     }
 
     reads = Channel
     .fromFilePairs('1-Input/*R{1,2}*.fastq')
 
-    bwa_index = file(params.reference + ".{,amb,ann,bwt,pac,sa}")
-    BWAmem(reads, bwa_index)
-    hla_la(BWAmem.out)
+    bwa_index = file(params.ref + "*")
+    BWA_MEM(reads, bwa_index)
+    HLA_LA(BWAmem.out)
 }
