@@ -11,7 +11,7 @@ As the pipeline is both memory and cpu intensive it's recommended to launch the 
 ```bash
 sbatch launch_nf.job main.nf nextflow.conf
 ```
-Also for testing you could use:
+Supported time formats are  "min", "min:sec", "hours:min:sec", "days-hours", "days-hours:min" and "days-hours:min:sec". Also for testing you could use:
 ```bash
 srun --mem=2g --pty /bin/bash
 ```
