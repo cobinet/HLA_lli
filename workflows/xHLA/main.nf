@@ -1,3 +1,5 @@
+include { BWA_MEM } from '../alignment/bwa_alignment.nf'
+
 process XHLA {
     cpus 20
     memory '500G'
@@ -25,6 +27,6 @@ workflow {
     .fromFilePairs('1-Input/*R{1,2}*.fastq')
 
     bwa_index = file(params.reference + ".{,amb,ann,bwt,pac,sa}")
-    BWAmem(reads, bwa_index)
-    XHLA(BWAmem.out)
+    BWA_MEM(reads, bwa_index)
+    XHLA(BWA_MEM.out)
 }
