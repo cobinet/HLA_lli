@@ -32,7 +32,7 @@ process MAKE_REF_IDS {
         if grep -q "chr6\t" "${ref}"; then
             sed -i '/^chr6\t/ s/\$/28510120\t33480577/' ${ref}
         else
-            sed -i '/^*\t/ s/\$/0\t0/' ${ref}
+            sed -i '/^*\t/ s/\$/28510120\t33480577/' ${ref}
         fi
         """
 }
@@ -53,14 +53,15 @@ process TYPING {
     output:
         path "./out/*"
     script:
+        def id = (sample =~ /(\w+)-/)[0][1]
         """
         mkdir out
         HLA-LA.pl\
             --BAM ${bam}\
             --graph ${graph}\
-            --sampleID ${sample}\
+            --sampleID ${id}\
             --maxThreads ${task.cpus}\
-            --workingDir ./out/
+            --workingDir ./out/\
         """
 }
 
