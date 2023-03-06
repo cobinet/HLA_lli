@@ -4,7 +4,7 @@ process XHLA {
     cpus 20
     memory '500G'
     container 'docker://humanlongevity/hla'
-    publishDir "3-xHLA", mode: 'link'
+    publishDir "3-xHLA"
     input:
         tuple val(sample), file(bam)
     output:

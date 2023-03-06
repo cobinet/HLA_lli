@@ -2,7 +2,7 @@ process BWA_MEM {
     cpus 8
     memory '20G'
     container 'docker://humanlongevity/hla'
-    publishDir "2-Alignment", mode: 'link'
+    publishDir "2-Alignment"
     input:
         tuple val(sample), path(reads)
         each path(bwa_index)

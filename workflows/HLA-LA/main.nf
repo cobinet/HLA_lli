@@ -40,7 +40,7 @@ process MAKE_REF_IDS {
 process TYPING {
     cpus 20
     memory '200G'
-    publishDir "3-HLA-LA", mode: 'link'
+    publishDir "3-HLA-LA"
 
     graph_path = "/usr/local/bin/HLA-LA/graphs/"
     container 'docker://zlskidmore/hla-la:latest'

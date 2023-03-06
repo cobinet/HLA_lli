@@ -5,7 +5,7 @@ process TYPING {
     memory '10G'
     cpus '20'
     container "nmendozam/hla-hd"
-    publishDir "2-HLA-HD", mode: 'move'
+    publishDir "2-HLA-HD"
     input:
         tuple val(sample), path(reads)
     output:
@@ -25,7 +25,7 @@ process TYPING {
 }
 
 process uncompress_fastq {
-    publishDir "2-Uncompresed", mode: 'move'
+    publishDir "2-Uncompresed"
     input:
         tuple val(sample), path(reads)
     output:

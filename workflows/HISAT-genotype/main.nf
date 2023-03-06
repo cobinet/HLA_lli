@@ -3,7 +3,7 @@ process hisat_genotype {
     cpus 8
     memory '40G'
     container 'docker://nmendozam/hisat-genotype:3.50.0'
-    publishDir "2-results", mode: 'copy'
+    publishDir "2-results"
     input:
         tuple val(sample), path(reads)
     output:
