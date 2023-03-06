@@ -1,5 +1,6 @@
 process download_reference {
     container 'frolvlad/alpine-bash'
+    publishDir "reference_genome"
     output:
         path "hg38.fa", emit: "reference"
     script:
@@ -11,6 +12,7 @@ process download_reference {
 
 process remove_alternatives {
     container 'biocontainers/samtools:v1.9-4-deb_cv1'
+    publishDir "reference_genome"
     input:
         file reference
     script:
@@ -43,9 +45,14 @@ workflow DOWNLOAD_REF {
 
         index_fasta(ref.concat(noalt))
 
+        index_fasta.out.branch {
+            complete: !(it.baseName =~ /.*noalt.*/)
+            without_alternatives: it.baseName =~ /.*noalt.*/
+        }
+        .set { result }
     emit:
-        ref = index_fasta.out[0]
-        refWoAlt = index_fasta.out[1]
+        ref = result.complete.flatten().concat(ref).collate(6)
+        refWoAlt = result.without_alternatives.flatten().concat(noalt).collate(6)
 }
 
 workflow {
