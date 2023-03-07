@@ -2,6 +2,7 @@ params.hlahd_dir = "~/.local/share/hlahd.1.6.1/"
 params.reference_ver = "GRCh38"
 
 process TYPING {
+    tag "${sample}"
     memory '10G'
     cpus '20'
     container "nmendozam/hla-hd"
@@ -39,11 +40,12 @@ process uncompress_fastq {
 }
 
 process EXTRACT_MHC {
+    tag "${sample}"
     container "biocontainers/samtools:v1.9-4-deb_cv1"
     input:
         tuple val(sample), path(bam)
     output:
-        tuple val(sample), path("${sample}.mhc.bam")
+        tuple val(sample), path("${sample}.paired.bam")
     script:
         if (params.reference_ver == "GRCh38") {
             region = "chr6:28,510,120-33,480,577"
@@ -62,11 +64,14 @@ process EXTRACT_MHC {
         samtools view -b -f 4 ${bam} > ${sample}.unmap.bam
         
         #Merge bam files
-        samtools merge -o ${sample}.merge.bam ${sample}.unmap.bam ${sample}.mhc.bam
+        samtools merge -@ ${task.cpus} ${sample}.merge.bam ${sample}.unmap.bam ${sample}.mhc.bam
+        samtools sort -@ ${task.cpus} -n ${sample}.mhc.bam -o ${sample}.sort.bam
+        samtools view -f 0x2 -b ${sample}.sort.bam > ${sample}.paired.bam
         """
 }
 
 process BAM_TO_FQ {
+    tag "${sample}"
     container "broadinstitute/picard"
     input:
         tuple val(sample), path(bam)
@@ -75,7 +80,7 @@ process BAM_TO_FQ {
     script:
         """
         #Create fastq
-        java -jar picard.jar SamToFastq I=${bam} F=${sample}.hlatmp.1.fastq F2=${sample}.hlatmp.2.fastq
+        java -jar /usr/picard/picard.jar SamToFastq I=${bam} F=${sample}.hlatmp.1.fastq F2=${sample}.hlatmp.2.fastq
         
         #Change fastq ID
         cat ${sample}.hlatmp.1.fastq |awk '{if(NR%4 == 1){O=\$0;gsub("/1","1",O);print O}else{print \$0}}' > ${sample}.hla.1.fastq
