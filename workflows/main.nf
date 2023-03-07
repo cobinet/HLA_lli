@@ -6,6 +6,9 @@ include { XHLA } from './xHLA/main.nf'
 
 workflow MAPPING {
     main:
+        // Get reads
+        fa_files = Channel.fromFilePairs('1-Input/*R{1,2}*.fastq')
+        // Get reference genome
         if (params.ref && params.refWoAlt) {
             references = Channel.fromPath([
                     params.ref + "*",
@@ -15,7 +18,7 @@ workflow MAPPING {
             DOWNLOAD_REF()
             references = DOWNLOAD_REF.out.ref.concat(DOWNLOAD_REF.out.refWoAlt)
         }
-        fa_files = Channel.fromFilePairs('1-Input/*R{1,2}*.fastq')
+        // Map reads to reference
         BWA_MEM(fa_files, references)
     emit:
         ref = BWA_MEM.out.first()
@@ -25,7 +28,7 @@ workflow MAPPING {
 workflow HLATYPING_REF {
     take: ref
     main:
-        HLA_LA(ref)
+        // HLA_LA(ref)
         HLA_HD(ref)
 }
 
