@@ -1,7 +1,7 @@
 FROM biocontainers/bowtie2:v2.4.1_cv1
-COPY hlahd.1.6.1.tar.gz .
-RUN tar -zxvf hlahd.1.6.1.tar.gz
-RUN cd ~/.local/share/hlahd.1.6.1
+COPY hlahd.1.7.0.tar.gz .
+RUN tar -zxvf hlahd.1.7.0.tar.gz
+RUN cd ~/.local/share/hlahd.1.7.0
 RUN export PATH=$PATH:target_path/hlahd.x.y.z/bin
 # Select the newest dictionary
 RUN mv HLA_gene.split.txt HLA_gene.split.default.txt
