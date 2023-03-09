@@ -12,7 +12,7 @@ RUN mv HLA_gene.split.txt HLA_gene.split.default.txt
 RUN mv HLA_gene.split.3.50.0.txt HLA_gene.split.txt
 # Update the dictionary
 RUN sh update.dictionary.sh
-RUN chown -R biodocker *
+RUN chmod +x /usr/local/hlahd.1.7.0/bin/*
 
 WORKDIR /work
 
