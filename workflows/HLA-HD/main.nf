@@ -1,11 +1,10 @@
-params.hlahd_dir = "~/.local/share/hlahd.1.6.1/"
 params.reference_ver = "GRCh38"
 
 process TYPING {
     tag "${sample}"
-    memory '10G'
+    memory '50G'
     cpus '20'
-    container "nmendozam/hla-hd"
+    container "nmendozam/hla-hd:latest"
     publishDir "2-HLA-HD"
     input:
         tuple val(sample), path(reads)
@@ -13,12 +12,14 @@ process TYPING {
         path "${sample}/result/*"
     script:
         def (f1, f2) = reads
+        hlahd_dir = "/usr/local/hlahd.1.7.0/"
+        min_len = 100
         """
-        hlahd.sh -t 20 -m 100 -c 0.95 \
-        -f ${params.hlahd_dir}freq_data/ \
+        hlahd.sh -t $task.cpus -m $min_len -c 0.95 \
+        -f ${hlahd_dir}freq_data/ \
         ${f1} ${f2} \
-        ${params.hlahd_dir}HLA_gene.split.txt \
-        ${params.hlahd_dir}dictionary/ \
+        ${hlahd_dir}HLA_gene.split.txt \
+        ${hlahd_dir}dictionary/ \
         ${sample} \
         .
         """

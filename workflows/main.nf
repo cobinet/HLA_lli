@@ -3,6 +3,7 @@ include { BWA_MEM } from './alignment/bwa_alignment.nf'
 include { HLA_LA } from './HLA-LA/main.nf'
 include { HLA_HD } from './HLA-HD/main.nf'
 include { XHLA } from './xHLA/main.nf'
+include { OPTITYPE } from './Optitype/main.nf'
 
 workflow MAPPING {
     main:
@@ -30,6 +31,7 @@ workflow HLATYPING_REF {
     main:
         // HLA_LA(ref)
         HLA_HD(ref)
+        // OPTITYPE(ref)
 }
 
 workflow HLATYPING_REF_WO_ALT {
