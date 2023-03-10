@@ -16,4 +16,6 @@ RUN mv HLA_gene.split.3.50.0.txt HLA_gene.split.txt
 # Update the dictionary
 RUN sh update.dictionary.sh
 
+RUN chmod -R +x /usr/local/hlahd.1.7.0/bin/*
+
 WORKDIR /work
