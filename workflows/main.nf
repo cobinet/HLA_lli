@@ -4,6 +4,8 @@ include { HLA_LA } from './HLA-LA/main.nf'
 include { HLA_HD } from './HLA-HD/main.nf'
 include { XHLA } from './xHLA/main.nf'
 include { OPTITYPE } from './Optitype/main.nf'
+include { EXTRACT_MHC } from './utils/main.nf'
+include { BAM_TO_FQ } from './utils/main.nf'
 
 workflow MAPPING {
     main:
@@ -27,17 +29,19 @@ workflow MAPPING {
 }
 
 workflow HLATYPING_REF {
-    take: ref
+    take: bam
     main:
-        // HLA_LA(ref)
-        HLA_HD(ref)
-        // OPTITYPE(ref)
+        HLA_LA(bam)
+
+        filtered_reads = EXTRACT_MHC(bam) | BAM_TO_FQ
+        HLA_HD(filtered_reads)
+        OPTITYPE(filtered_reads)
 }
 
 workflow HLATYPING_REF_WO_ALT {
-    take: ref
+    take: bam
     main:
-        XHLA(ref)
+        XHLA(bam)
 }
 
 workflow {
