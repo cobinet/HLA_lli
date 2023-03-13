@@ -2,7 +2,7 @@ include { BWA_MEM } from '../alignment/bwa_alignment.nf'
 
 process XHLA {
     cpus 20
-    memory '500G'
+    memory '100G'
     container 'docker://humanlongevity/hla'
     publishDir "3-xHLA"
     input:
