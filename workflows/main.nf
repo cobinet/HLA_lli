@@ -6,6 +6,7 @@ include { XHLA } from './xHLA/main.nf'
 include { OPTITYPE } from './Optitype/main.nf'
 include { EXTRACT_MHC } from './utils/main.nf'
 include { BAM_TO_FQ } from './utils/main.nf'
+include { PHLAT } from './PHLAT/main.nf'
 
 workflow MAPPING {
     main:
@@ -36,6 +37,7 @@ workflow HLATYPING_REF {
         filtered_reads = EXTRACT_MHC(bam) | BAM_TO_FQ
         HLA_HD(filtered_reads)
         OPTITYPE(filtered_reads)
+        PHLAT(filtered_reads)
 }
 
 workflow HLATYPING_REF_WO_ALT {
