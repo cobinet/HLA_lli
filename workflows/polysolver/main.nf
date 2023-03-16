@@ -1,11 +1,12 @@
 process POLYSOLVER {
-    container "vacation/hla-polysolver:latest"
+    container "sachet/polysolver:v4"
+    publishDir "2-Polysolver", saveAs {it -> "${sample+it}"}
     input:
         val sample
         path bam
         path bai
     output:
-        "output/"
+        path "output/winners.hla.txt"
     script:
         race = "Caucasian"
         includeFreq = 1
