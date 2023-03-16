@@ -3,7 +3,7 @@ nextflow.enable.dsl = 2
 
 
 
-include { HLATYPING } from './workflows/main'
+include { HLATYPING } from './workflows/main.nf'
 
 
 workflow {

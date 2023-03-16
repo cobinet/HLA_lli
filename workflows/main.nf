@@ -46,8 +46,12 @@ workflow HLATYPING_REF_WO_ALT {
         XHLA(bam)
 }
 
-workflow {
+workflow HLATYPING {
     MAPPING()
     HLATYPING_REF(MAPPING.out.ref)
     HLATYPING_REF_WO_ALT(MAPPING.out.refWoAlt)
+}
+
+workflow {
+    HLATYPING()
 }
