@@ -7,13 +7,13 @@ process BWA_MEM {
         tuple val(sample), path(reads)
         each path(bwa_index)
     output:
-        tuple val(sample), path("${sample}.bam*")
+        tuple val(sample), path("${sample}.*.bam*")
     script:
         def idxbase = bwa_index[0].baseName
         def (f1, f2) = reads
         """
         bwa mem -t ${task.cpus} ${idxbase} ${f1} ${f2} |\
-        samtools sort -@${task.cpus} -o ${sample}.bam -
-        samtools index ${sample}.bam
+        samtools sort -@${task.cpus} -o ${sample}.${idxbase}.bam -
+        samtools index ${sample}.${idxbase}.bam
         """
 }
