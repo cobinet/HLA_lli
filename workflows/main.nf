@@ -8,22 +8,33 @@ include { EXTRACT_MHC } from './utils/main.nf'
 include { BAM_TO_FQ } from './utils/main.nf'
 include { PHLAT } from './PHLAT/main.nf'
 
-workflow MAPPING {
+workflow GET_REF {
     main:
-        // Get reads
-        fa_files = Channel.fromFilePairs('1-Input/*R{1,2}*.fastq')
         // Get reference genome
         if (params.ref && params.refWoAlt) {
             references = Channel.fromPath([
                     params.ref + "*",
                     params.refWoAlt + "*"]
                 ).buffer(size: 6)
+
+            if (references.count()) {
+                exit 1, "Wrong reference path"
+            }
         } else {
             DOWNLOAD_REF()
             references = DOWNLOAD_REF.out.ref.concat(DOWNLOAD_REF.out.refWoAlt)
         }
+
+    emit:
+        references
+
+}
+
+workflow MAPPING {
+    take: fq_files
+    main:
         // Map reads to reference
-        BWA_MEM(fa_files, references)
+        BWA_MEM(fq_files, GET_REF())
     emit:
         ref = BWA_MEM.out.first()
         refWoAlt = BWA_MEM.out.last()
@@ -47,11 +58,15 @@ workflow HLATYPING_REF_WO_ALT {
 }
 
 workflow HLATYPING {
-    MAPPING()
-    HLATYPING_REF(MAPPING.out.ref)
-    HLATYPING_REF_WO_ALT(MAPPING.out.refWoAlt)
+    take: fq_files
+    main:
+        MAPPING(fq_files)
+        HLATYPING_REF(MAPPING.out.ref)
+        HLATYPING_REF_WO_ALT(MAPPING.out.refWoAlt)
 }
 
 workflow {
-    HLATYPING()
+    // Get reads
+    fq_files = Channel.fromFilePairs('1-Input/*R{1,2}*.fastq')
+    HLATYPING(fq_files)
 }
