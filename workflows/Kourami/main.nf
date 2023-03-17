@@ -1,30 +1,7 @@
-process MAKE_DB {
-    container "aniroula/kourami:latest"
-    containerOptions "-B db:/usr/local/kourami/db -B custom_db:/usr/local/kourami/custom_db"
-    beforeScript "mkdir db custom_db"
-    output:
-        path "db"
-    script:
-        def url = "https://github.com/ANHIG/IMGTHLA/archive/refs/tags/v3.50.0-alpha.tar.gz"
-        """
-        /usr/local/kourami/scripts/download_panel.sh
-
-        wget -O- $url | tar xzf - -C db
-        mv db/IMGTHLA-3.50.0-alpha/* db/
-        mv db/wmda/* db/
-        mv db/alignments/* db/
-        mv db/msf/* db/
-        /usr/local/kourami/scripts/formatIMGT.sh -i db/ -v 3.50.0 
-        bwa index db/All_FINAL_with_Decoy.fa.gz
-        """
-}
-
 process TYPING {
     container "aniroula/kourami:latest"
-    containerOptions "-B ${db}:/usr/local/kourami/${db}"
     input:
         tuple val(sample), path(files)
-        path db
     output:
         path "out"
 
@@ -42,7 +19,7 @@ process TYPING {
 workflow KOURAMI {
     take: align_files
     main:
-        TYPING(align_files, MAKE_DB())
+        TYPING(align_files)
     emit:
         TYPING.out
 }
