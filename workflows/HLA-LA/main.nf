@@ -1,65 +1,77 @@
 include { BWA_MEM } from '../alignment/bwa_alignment.nf'
 
-process GET_GRAPH {
-    cpus 20
+src_path = "/usr/local/bin/HLA-LA"
+params.imgt_url = "https://www.well.ox.ac.uk/downloads/PRG_MHC_GRCh38_withIMGT.tar.gz"
+params.hlala_ref_url = "https://www.dropbox.com/s/mnkig0fhaym43m0/reference_HLA_ASM.tar.gz?dl=1"
+
+process PREPARE_GRAPH {
+    cpus 8
     memory '20G'
+
+    beforeScript "mkdir ${graph.simpleName} ${reference.simpleName}"
+
     container 'docker://zlskidmore/hla-la:latest'
     publishDir "graph"
-
+    containerOptions """-B ${graph.simpleName}:${src_path}/graphs/${graph.simpleName}\
+                        -B ${reference.simpleName}:${src_path}/src/${reference.simpleName}"""
+    input:
+        path graph
+        path reference
     output:
-        path "PRG_MHC_GRCh38_withIMGT/", emit: graph
+        path "graph", emit: graph
+        path "ref", emit: reference
     script:
         """
-        wget http://www.well.ox.ac.uk/downloads/PRG_MHC_GRCh38_withIMGT.tar.gz
-        tar -xvzf PRG_MHC_GRCh38_withIMGT.tar.gz
-        HLA-LA --action prepareGraph --PRG_graph_dir PRG_MHC_GRCh38_withIMGT
+        tar -xvzf $graph
+        tar -xvzf $reference
+        HLA-LA --action prepareGraph --PRG_graph_dir ${graph.simpleName}
         """
 }
 
 process MAKE_REF_IDS {
     container 'docker://zlskidmore/hla-la:latest'
     input:
-        tuple val(sample), file(bam)
+        tuple val(sample), path(files)
     output:
         path "ref_id_unix.txt"
     script:
         ref = "ref_id_unix.txt"
+        def (bam, bai) = files
         """
         echo "contigID\tcontigLength\tExtractCompleteContig\tPartialExtraction_Start\tPartialExtraction_Stop" > ref_id.txt
-        samtools idxstats ${bam} >> ref_id.txt
-        awk '{ sub("\\r\$", ""); print }' ref_id.txt > ${ref}
-
-        if grep -q "chr6\t" "${ref}"; then
-            sed -i '/^chr6\t/ s/\$/28510120\t33480577/' ${ref}
-        else
-            sed -i '/^*\t/ s/\$/28510120\t33480577/' ${ref}
-        fi
+        samtools idxstats ${bam} | awk '{print \$1, \$2, 0}' >> ref_id.txt
+        # Fix line returns for unix
+        awk '{ sub("\\r\$", ""); print }' ref_id.txt > ref_id.unix.txt
+        # Select reads to be extracted from bam
+        awk '/\\*/{print \$1, \$2, 1; next} 1' ref_id.unix.txt | sed '/^chr6/ s/\$/\t28510120\t33480577/' > ${ref}
         """
 }
 
 process TYPING {
+    tag "$sample"
     cpus 20
-    memory '200G'
+    memory '50G'
     publishDir "3-HLA-LA"
 
-    graph_path = "/usr/local/bin/HLA-LA/graphs/"
     container 'docker://zlskidmore/hla-la:latest'
-    containerOptions "-B ${graph}:${graph_path}/${graph} -B ${ref_ids}:${graph_path}/${graph}/knownReferences/${ref_ids}"
+    containerOptions """-B ${graph}:${src_path}/graphs/${graph}\
+                        -B ${ref_ids}:${src_path}/graphs/${graph}/knownReferences/${ref_ids}\
+                        -B ${reference}:${src_path}/src/${reference}"""
 
     input:
         tuple val(sample), file(bam)
         path graph
+        path reference
         path ref_ids
     output:
-        path "./out/*"
+        path "./out/$sample/"
     script:
-        def id = (sample =~ /(\w+)-/)[0][1]
         """
         mkdir out
         HLA-LA.pl\
-            --BAM ${bam}\
+            --BAM ${sample}.bam\
             --graph ${graph}\
-            --sampleID ${id}\
+            --sampleID ${sample}\
             --maxThreads ${task.cpus}\
             --workingDir ./out/\
         """
@@ -68,8 +80,10 @@ process TYPING {
 workflow HLA_LA {
     take: bam
     main:
-        GET_GRAPH()
-        TYPING(bam, GET_GRAPH.out, MAKE_REF_IDS(GET_GRAPH.out))
+        graph = Channel.fromPath(params.imgt_url)
+        ref = Channel.fromPath(params.hlala_ref_url)
+        PREPARE_GRAPH(graph, ref)
+        TYPING(bam, PREPARE_GRAPH.out.graph, PREPARE_GRAPH.out.reference, MAKE_REF_IDS(bam))
     emit:
         TYPING.out
 }
