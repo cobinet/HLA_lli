@@ -6,10 +6,11 @@ process XHLA {
     container 'docker://humanlongevity/hla'
     publishDir "3-xHLA"
     input:
-        tuple val(sample), file(bam)
+        tuple val(sample), path(files)
     output:
         path "${sample}"
     script:
+        def (bam, bai) = files
         """
         run.py \
         --sample_id ${sample} --input_bam_path ${bam} \
