@@ -1,12 +1,15 @@
-process download_reference {
+params.ref_url = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz"
+
+process decompres_fasta {
     container 'frolvlad/alpine-bash'
     publishDir "reference_genome"
+    input:
+        path ref
     output:
         path "hg38.fa", emit: "reference"
     script:
         """
-        wget https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/hg38.fa.gz
-        gunzip hg38.fa.gz
+        gunzip $ref
         """
 }
 
@@ -40,7 +43,8 @@ process index_fasta {
 
 workflow DOWNLOAD_REF {
     main:
-        ref = download_reference()
+        ref_gz = Channel.fromPath(params.ref_url)
+        ref = decompres_fasta(ref_gz)
         noalt = remove_alternatives(ref)
 
         index_fasta(ref.concat(noalt))
