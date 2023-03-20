@@ -66,6 +66,7 @@ process TYPING {
     output:
         path "./out/$sample/"
     script:
+        // Only alphanumeric values are allowed
         def id = (sample =~ /(\w+)/)[0][1]
         def (bam, bai) = files
         """
