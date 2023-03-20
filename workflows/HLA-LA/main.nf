@@ -2,7 +2,7 @@ include { BWA_MEM } from '../alignment/bwa_alignment.nf'
 
 src_path = "/usr/local/bin/HLA-LA"
 params.imgt_url = "https://www.well.ox.ac.uk/downloads/PRG_MHC_GRCh38_withIMGT.tar.gz"
-params.hlala_ref_url = "https://www.dropbox.com/s/mnkig0fhaym43m0/reference_HLA_ASM.tar.gz?dl=1"
+params.hlala_ref_url = "https://dl.dropboxusercontent.com/s/mnkig0fhaym43m0/reference_HLA_ASM.tar.gz?dl=1"
 
 process PREPARE_GRAPH {
     cpus 8
@@ -18,8 +18,8 @@ process PREPARE_GRAPH {
         path graph
         path reference
     output:
-        path "graph", emit: graph
-        path "ref", emit: reference
+        path "$graph.simpleName", emit: graph
+        path "$reference.simpleName", emit: reference
     script:
         """
         tar -xvzf $graph
@@ -39,11 +39,11 @@ process MAKE_REF_IDS {
         def (bam, bai) = files
         """
         echo "contigID\tcontigLength\tExtractCompleteContig\tPartialExtraction_Start\tPartialExtraction_Stop" > ref_id.txt
-        samtools idxstats ${bam} | awk '{print \$1, \$2, 0}' >> ref_id.txt
+        samtools idxstats ${bam} | awk -v OFS='\\t' '{print \$1, \$2, 0}' >> ref_id.txt
         # Fix line returns for unix
         awk '{ sub("\\r\$", ""); print }' ref_id.txt > ref_id.unix.txt
         # Select reads to be extracted from bam
-        awk '/\\*/{print \$1, \$2, 1; next} 1' ref_id.unix.txt | sed '/^chr6/ s/\$/\t28510120\t33480577/' > ${ref}
+        awk -v OFS='\\t' '/^chr6_/ || /\\*/{print \$1, \$2, 1; next} 1' ref_id.unix.txt | sed '/^chr6\t/ s/\$/\t28510120\t33480577/' > ${ref}
         """
 }
 
@@ -59,19 +59,21 @@ process TYPING {
                         -B ${reference}:${src_path}/src/${reference}"""
 
     input:
-        tuple val(sample), file(bam)
+        tuple val(sample), path(files)
         path graph
         path reference
         path ref_ids
     output:
         path "./out/$sample/"
     script:
+        def id = (sample =~ /(\w+)/)[0][1]
+        def (bam, bai) = files
         """
         mkdir out
         HLA-LA.pl\
-            --BAM ${sample}.bam\
+            --BAM ${bam}\
             --graph ${graph}\
-            --sampleID ${sample}\
+            --sampleID ${id}\
             --maxThreads ${task.cpus}\
             --workingDir ./out/\
         """
