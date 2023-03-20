@@ -15,9 +15,9 @@ workflow GET_REF {
             references = Channel.fromPath([
                     params.ref + "*",
                     params.refWoAlt + "*"]
-                ).buffer(size: 6)
+                ).buffer(size: 4)
 
-            if (references.count()) {
+            if (!references.count()) {
                 exit 1, "Wrong reference path"
             }
         } else {
